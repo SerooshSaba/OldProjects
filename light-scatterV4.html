@@ -1,0 +1,120 @@
+<html>
+    <body>
+        <style>
+            * {
+                margin: 0px;
+                padding: 0px;
+            }
+        </style>
+        <canvas id="canv" width="650" height="650" ></canvas>
+    </body>
+    <script>
+        window.onload = function () {
+         
+            var canvas = document.getElementById("canv");
+            var c = canvas.getContext("2d");
+            c.beginPath();
+            c.fillStyle = "grey";
+            c.fillRect(0,0, 650,650);
+                    
+            
+            // Blockades
+            var blc = [325,125,325,500,
+                       425,125,425,500];
+            
+            
+            canvas.addEventListener("mousemove",function(event){    
+                
+                var mx = event.clientX;
+                var my = event.clientY;
+                
+                //CEAR
+                c.beginPath();
+                c.fillStyle = "black";
+                c.fillRect(0,0, 650,650);
+                
+                // Enviroment variables
+                                                                c.strokeStyle = "white";
+                                                                c.lineWidth = "0.5";
+                
+                
+                // Tegner linjer
+                var trig = 0;
+                                                                var lines = 100; // antall linjer
+                
+                for ( let x = 0; x <= lines; x++ ) {
+  
+                    var xstart = mx;
+                    var ystart = my;
+                    var xend = mx + 400*Math.cos(trig);
+                    var yend = my + 400*Math.sin(trig);
+                    
+                    var xdiff = xend - xstart;
+                    var ydiff = yend - ystart;
+                    
+                    var xdiff = xdiff/40; // antall boxer per linje AVHENGIG: X
+                    var ydiff = ydiff/40;
+                    
+
+                    
+                    // LINJE
+                    var oldx = 0;
+                    var oldy = 0;
+                    var length = 0;
+                    var jumplength = 10;
+                    var antallBoxerpoenLinje = 81
+                    
+                    for ( let x = 0; x < antallBoxerpoenLinje; x++) {
+                        
+                        if ( oldx == 0 && oldy == 0 ) {
+
+                            c.beginPath();
+                            c.moveTo(mx,my);
+                            c.lineTo(mx + length*Math.cos(trig), my + length*Math.sin(trig) );
+                            c.stroke();
+
+                            var rectX = mx+xdiff*x;
+                            var rectY = my+ydiff*x;
+
+                            oldx = mx + length*Math.cos(trig);
+                            oldy = my + length*Math.sin(trig);
+                            length += jumplength;
+                        } else {
+
+                            c.beginPath();
+                            c.moveTo(mx,my);
+                            c.lineTo(mx + length*Math.cos(trig), my + length*Math.sin(trig) ); 
+                            c.stroke();
+
+                            var rectX = mx+xdiff*x;
+                            var rectY = my+ydiff*x;
+                             
+                            
+                            if (    ((rectX<blc[0]) && (rectX+10>blc[0])) &&  (((rectY<blc[1]) && (rectY+10>blc[1])) || ((rectY<blc[3]) && (rectY+10>blc[3]))) 
+                            ||      (((rectX<blc[0]) && (rectX+10>blc[0])) && ((rectY>blc[1]) && (rectY+10 < blc[3])))    ) 
+                            
+                            {
+                                break;
+                            }
+
+
+                            oldx = mx + length*Math.cos(trig);
+                            oldy = my + length*Math.sin(trig);
+                            length += jumplength;   
+
+                            
+                        }
+                    
+                    }
+
+                    
+                    trig += 2*Math.PI/lines;  
+                    
+                }
+                
+
+            });
+                        
+        }
+    </script>
+</html>
