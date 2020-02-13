@@ -1,0 +1,80 @@
+<html>
+<head>
+	<meta charset="utf-8">
+</head>
+<canvas id="canvas" height="150" width="150" style="box-shadow: 1px 1px 10px rgba(0,0,0,0.5)" ></canvas>
+</html>
+<script>
+
+	var canvas = document.getElementById("canvas");
+	var ctx    = canvas.getContext("2d");
+
+	var node = [];
+
+	// Create nodes
+	for ( var i = 1; i <= 212; i++ ) {
+		node.push( { "x": i, "y": i } );
+	}
+
+	function clear() {
+		ctx.beginPath();
+		ctx.moveTo(0,0);
+		ctx.fillStyle = "white";
+		ctx.fillRect(0,0, 150, 150);
+	}
+	function renderFrame() {
+		for ( var i = 0; i < node.length; i++ ) {
+			ctx.beginPath();
+			ctx.fillStyle = "black";
+			ctx.fillRect( node[i].x, node[i].y, 1, 1 ); 
+		}		
+	}
+
+
+	// Randomizer
+	setInterval(  function() {
+		for ( var i = 0; i < node.length; i++ ) {
+
+			const selected_node = node[i];
+		
+			for ( var x = 0; x < node.length; x++ ) {
+
+				const compare_node = node[x];
+
+				// Den er ved siden av en annen node 
+				if ( (selected_node.x == compare_node.x - 1 || selected_node.x == compare_node.x + 1) || (selected_node.y == compare_node.y - 1 || selected_node.y == compare_node.y + 1) ) {
+					
+					const x_rand = Math.floor( Math.random() * 2 );
+					const y_rand = Math.floor( Math.random() * 2 );
+
+					var ny_pos_x = compare_node.x;
+					var ny_pos_y = compare_node.y;
+
+					if ( x_rand > 0 ) {
+						ny_pos_x -= 1;
+					} else {
+						ny_pos_x += 1;
+					}
+					if ( y_rand > 0 ) {
+						ny_pos_y -= 1;
+					} else {
+						ny_pos_y += 1;
+					}
+
+					node[i].x = ny_pos_x;
+					node[i].y = ny_pos_y;
+
+				}
+			}
+		}
+		clear();
+		renderFrame();
+	} , 100 );
+
+
+
+
+
+
+
+</script>
