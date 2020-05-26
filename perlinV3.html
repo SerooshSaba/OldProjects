@@ -1,0 +1,162 @@
+ <!DOCTYPE html>
+ <style>
+	body {
+		background-color: black;
+	}
+</style>
+<html>
+	<head>
+		<meta charset="utf-8" >
+	</head>
+	<canvas id="canvas" width="1880" height="950" ></canvas>
+</html>
+<script>
+	
+	var canvas = document.getElementById("canvas");
+	var ctx    = canvas.getContext("2d");
+	var colors = [ "red", "blue", "purple", "pink", "green", "orange" ];
+
+	const HEIGHT = 950;
+	const WIDTH  = 1880;
+
+	// Lager grå bakgrunn
+	ctx.fillStyle = "rgba(50,50,50)"; 
+	ctx.moveTo(0,0);
+	ctx.rect(0,0, WIDTH, HEIGHT);
+	ctx.fill();
+
+
+
+	var calculations = 0;
+
+
+
+	function generate_perlin( MIN, MAX, AMPLITUDE, SMOOTHING ) {
+		var y_arr = [];
+		var counter = 1;
+		// Start y posisjon av perlin noise funksjonen
+		var y = ( MIN + MAX ) / 2;
+		// Raw noise generering ( hakette )
+		for ( var x = 0; x < WIDTH; x++ ) { // WIDTH er en konstant som er en global variabel på bredden av canvas :) ( hahahha 9gag/canvas stfu )
+			// Potensiell feil i denne if testen, men alt funker som det skal så i dunno
+			if ( counter % 1 == 0 ) {
+				var rand = Math.floor( Math.random()*100 );
+				// Bestemme om perlin noise skal ned eller opp i verdi
+				if ( rand > 50 ) {
+					if ( y > MIN ) {
+						y -= AMPLITUDE;
+					}
+				} else {
+					if ( y < MAX ) {
+						y += AMPLITUDE;
+					}			
+				}
+			}
+			y_arr.push( y );
+			counter++;
+		}
+		// Smooter raw noise slik at funksjonen ikke er hakette 
+		// Dette gjør jeg ved å ta average av de forrige verdiene i funksjonen slik at alt henger sammen.
+		for ( var x = 0; x < y_arr.length; x++ ) {
+			if ( x >= SMOOTHING ) {
+				var adder = 0;
+				for ( var y = 0; y < SMOOTHING; y++ ) {
+					adder += y_arr[ x - y ];
+				}
+				var num = adder / SMOOTHING;
+				y_arr[x] = num;
+			}
+		}
+		return y_arr;
+
+		calculations += 40;
+	}
+
+	// Inneholder alle perlin noise arrays ( 2d array )
+	var perlin_arr = [];	
+
+	// Antall perlin arrays vi vil lage
+	var lines = 5;
+	var distance_between_lines = 50;
+
+	// Generate leading perlin functions 
+	for ( x = 0; x < lines; x++ ) {
+		perlin_arr.push( generate_perlin( 0, HEIGHT/4 + distance_between_lines*x, 4, 5 ) );
+	}
+
+	var min_max_diff_arr = [];
+
+	for ( i = 0; i < perlin_arr.length; i++ ) {
+		// Finner høyeste og laveste verdien i funksjonen
+		var highest_val = perlin_arr[i][0];
+		var lowest_val  = perlin_arr[i][0];
+		for ( var x = 0; x < perlin_arr[i].length; x++ ) {
+			if ( perlin_arr[i][x] > highest_val ) {
+				highest_val = perlin_arr[i][x];
+			}
+			if ( perlin_arr[i][x] < lowest_val ) {
+				lowest_val = perlin_arr[i][x];
+			}
+		}
+		min_max_diff_arr.push( highest_val - lowest_val );
+		calculations += 12;
+	}
+	
+	// Høyeste
+	var biggest_value_diff = min_max_diff_arr.reduce(function(a, b) {
+    	return Math.max(a, b);
+	});
+	
+	// Color jump length
+	var col_jump_length = 255/biggest_value_diff;
+
+	var new_noise_arr = [];
+	var create_amount = 100;
+	var jump_length   = 1/create_amount;
+
+	// GENERATE MIDDLE FUNCTIONS
+	for ( var y = 0; y < perlin_arr.length - 1; y++ ) {
+		for ( var x = 1; x < create_amount; x++ ) {
+			var temp_arr = [];
+			for ( var i = 0; i < perlin_arr[y].length; i++ ) {
+				temp_arr.push( ( perlin_arr[y][i]*( 1 - jump_length*x ) + perlin_arr[ y + 1 ][i]*( 0 + jump_length*x ) ) );
+				calculations += 1;
+			}
+			new_noise_arr.push( temp_arr );
+			calculations += 3;
+		}
+	}
+
+	// ADD LEADING FUNCTIONS TO THE MIDDLE FUNCTIONS ARRAY
+	for ( var i = 0; i < perlin_arr.length; i++ ) {
+		new_noise_arr.push( perlin_arr[i] );
+		calculations += 1;
+	}
+
+
+	// DRAW MIDDLE FUNCTIONS
+	for ( var y = 0; y < new_noise_arr.length; y++ ) {
+		
+		// Get highest and lowest value from noise function
+		var highest_val = new_noise_arr[y][0];
+		for ( var i = 0; i < new_noise_arr[y].length; i++ ) {
+			if ( new_noise_arr[y][i] > highest_val ) {
+				highest_val = new_noise_arr[y][i];
+			}
+			calculations += 2;
+		}
+
+		for ( var x = 0; x < new_noise_arr[y].length; x++ ) {
+			var col = 255/(new_noise_arr[y][x] / highest_val)*0.5;
+			ctx.beginPath();
+			ctx.strokeStyle = "rgb("+col+","+col+","+col+")";
+			ctx.rect( x, new_noise_arr[y][x], 1, 1 );
+			ctx.stroke();
+			calculations += 5;
+		}
+		calculations += 3;
+	}
+
+	console.log( "calculations: ", calculations );
+
+</script>
