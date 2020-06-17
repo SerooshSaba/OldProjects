@@ -1,0 +1,293 @@
+<html>
+	<head>
+		<meta charset="utf-8" >
+	</head>
+	<canvas id="canvas" height="900" width="900" ></canvas>
+	<style>
+		html {
+			background-color: black;
+		}
+	</style>
+</html>
+<script>
+	
+	var canvas = document.getElementById("canvas");
+	var g      = canvas.getContext("2d");
+	
+	var HEIGHT = 900;
+	var WIDTH  = 900;
+
+
+	var attractors = [];
+	var birds = [];
+
+	const AMOUNT = 500;
+	const BOUNCE_DECAY = 0.99;
+	const REPULTION = 0.002; // Større = Mer
+	const DISTANCE_BETWEEN = 2;
+
+	const ATTRACTOR_AMOUNT = 2;
+	const ATTRACTOR_SPEED = 0.5;
+	const GROUP_CREATION_DISTANCE = 75;
+	const GROUP_ATTRACTOR_FORCE = 0.5; // Større = Mer
+
+
+	// FILL ------------------------------------------------------------------------
+
+	for ( var i = 0; i < AMOUNT; i++ ) {
+		birds.push(
+			{ 
+				x: 10 + Math.random()*WIDTH,
+				y: 10 + Math.random()*HEIGHT,
+				x_v: 0,
+				y_v: 0,
+				radius: 2
+			}
+		);
+	}
+
+
+	for ( var i = 0; i < ATTRACTOR_AMOUNT; i++ ) {
+		if ( Math.random() > 0.5 ) {
+			var x_vel = Math.random();
+		} else {
+			var x_vel = -1*Math.random();
+		}
+		if ( Math.random() > 0.5 ) {
+			var y_vel = Math.random();
+		} else {
+			var y_vel = -1*Math.random();
+		}
+
+		x_vel *= ATTRACTOR_SPEED;
+		y_vel *= ATTRACTOR_SPEED;
+
+		attractors.push(
+			{
+				x: WIDTH/2,
+				y: HEIGHT/2,
+				x_v: x_vel,
+				y_v: y_vel
+			}
+		);
+	}
+	
+
+	// HELPERS ----------------------------------------------------------------------
+	function pythagoras( x, y ) {
+		return Math.sqrt( Math.pow( x , 2 ) + Math.pow( y , 2 ) );
+	}
+
+	function distance_between( bird_1, bird_2 ) {
+		if ( bird_1.x > bird_2.x ) {
+			var x_diff = bird_1.x - bird_2.x;
+		} else {
+			var x_diff = bird_2.x - bird_1.x;			
+		}
+		if ( bird_1.y > bird_2.y ) {
+			var y_diff = bird_1.y - bird_2.y;
+		} else {
+			var y_diff = bird_2.y - bird_1.y;			
+		}
+		return pythagoras( x_diff, y_diff );
+	}
+
+
+
+	// LOGIC -----------------------------------------------------------------------
+	function moveBirds() {
+		for ( var i = 0; i < birds.length; i++ ) {
+			// X Y SPEED ADDER
+			birds[i].x += birds[i].x_v;
+			birds[i].y += birds[i].y_v;
+			var bird = birds[i];
+			
+			// Wall hit change DIRECTION
+			
+			if ( bird.x > WIDTH || bird.x < 0 ) {
+				birds[i].x_v *= -1;
+			}
+			if ( bird.y > HEIGHT || bird.y < 0 ) {
+				birds[i].y_v *= -1;
+			}
+
+			
+			// Wall hit change POSITION
+			/*
+			if ( bird.x > WIDTH ) {
+				birds[i].x  = 0;
+			}
+			if ( bird.x < 0 ) {
+				birds[i].x  = WIDTH;
+			}
+
+			if ( bird.y > HEIGHT ) {
+				birds[i].y = 0;
+			}
+			if ( bird.y < 0 ) {
+				birds[i].y = HEIGHT;
+			}*/
+			
+		}
+	}
+
+
+	function bird_spacing() {
+		for ( var i = 0; i < birds.length; i++ ) {
+			for ( var j = 0; j < birds.length; j++ ) {
+				if ( i !==j ) {
+
+					var bird_1 = birds[i];
+					var bird_2 = birds[j];
+
+					var distance_between_birds = distance_between( bird_1, bird_2 );
+
+					if ( distance_between_birds < DISTANCE_BETWEEN*2 ) {
+						// Bird_1 is inside another birds space
+						var repultion = distance_between_birds*REPULTION;
+						if ( bird_1.x > bird_2.x ) {
+							birds[i].x_v += repultion;
+						}
+						if ( bird_1.x < bird_2.x ) {
+							birds[i].x_v -= repultion;
+						}
+						if ( bird_1.y > bird_2.y ) {
+							birds[i].y_v += repultion;
+						}
+						if ( bird_1.y < bird_2.y ) {
+							birds[i].y_v -= repultion;
+						}
+						// Speed decay after each particle interaction
+						birds[i].x_v *= BOUNCE_DECAY;
+						birds[i].y_v *= BOUNCE_DECAY;
+					} 
+
+				
+				}
+			}
+		}
+	}
+
+
+
+	function moveTowardsAttractor() {
+		for ( var a = 0; a < attractors.length; a++ ) {
+
+			var a_x = attractors[a].x;
+			var a_y = attractors[a].y;
+
+			for ( var i = 0; i < birds.length; i++ ) {
+				var attractor = { x: a_x, y: a_y };
+				var bird = birds[i];
+				var distance_between_bird_attractor = distance_between( bird, attractor );
+				var attraction = GROUP_ATTRACTOR_FORCE/distance_between_bird_attractor;
+				
+				if ( distance_between_bird_attractor - bird.radius > 90 ) {
+					if ( birds[i].x > attractor.x ) {
+						birds[i].x_v -= attraction;
+					}
+					if (birds[i].x < attractor.x ) {
+						birds[i].x_v += attraction;
+					}
+					if ( birds[i].y > attractor.y ) {
+						birds[i].y_v -= attraction;
+					}
+					if (birds[i].y < attractor.y ) {
+						birds[i].y_v += attraction;
+					}
+				}
+
+			}
+
+		}
+
+
+		// move attractor
+		for ( var i = 0; i < attractors.length; i++ ) {
+			attractors[i].x += attractors[i].x_v;
+			attractors[i].y += attractors[i].y_v;
+			if ( attractors[i].x > WIDTH || attractors[i].x < 0 ) {
+				attractors[i].x_v *= -1;
+			}
+			if ( attractors[i].y > HEIGHT || attractors[i].y < 0 ) {
+				attractors[i].y_v *= -1;
+			}
+		}
+
+
+	}
+
+
+	
+
+	// VISUAL ---------------------------------------------------------------------
+	function renderBirds() {
+			
+		const bird_lenght = 10;
+
+		for ( var i = 0; i < birds.length; i++ ) {
+			
+			var bird = birds[i];
+			
+			g.beginPath();
+			g.strokeStyle = "white";
+			g.moveTo( bird.x, bird.y );
+			g.lineTo( bird.x + bird.x_v*bird_lenght, bird.y + bird.y_v*bird_lenght );
+			g.stroke();
+
+			/*
+			// bird
+			g.fillStyle = "white";
+			g.beginPath();
+			g.arc( bird.x, bird.y, bird.radius, 0, 2*Math.PI );
+			g.fill();
+			*/
+
+			/*
+			// BIRD SPACING
+			g.beginPath();
+			g.strokeStyle = "rgb(100,100,100)";
+			g.arc( bird.x, bird.y, DISTANCE_BETWEEN, 0, 2*Math.PI );
+			g.stroke();
+			*/
+			
+		}
+	}
+
+
+	function renderUniversalAttractor() {
+		for ( var i = 0; i < attractors.length; i++ ) {
+			var a_x = attractors[i].x;
+			var a_y = attractors[i].y;
+			g.fillStyle = "red";
+			g.beginPath();
+			g.arc( a_x, a_y, 3, 0, 2*Math.PI );
+			g.fill();
+		}
+	}
+
+
+	function clear() {
+		// Background
+		g.beginPath();
+		g.fillStyle = "rgb(75,75,75)";
+		g.rect( 0, 0, WIDTH, HEIGHT );
+		g.fill();
+	}
+
+
+	// -------------------------------- MAIN -------------------------------------
+
+	setInterval(function(){
+		clear();
+		moveBirds();
+		bird_spacing();
+		moveTowardsAttractor();
+		renderBirds();
+		renderUniversalAttractor();
+
+	},1); 
+
+
+
+</script>
